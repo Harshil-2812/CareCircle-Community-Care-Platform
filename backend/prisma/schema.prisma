@@ -1,0 +1,206 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Roles {
+  role_id    Int          @id @default(autoincrement())
+  role_name  String       @unique @db.VarChar(50)
+  User_Roles User_Roles[]
+}
+
+model Users {
+  user_id       Int           @id @default(autoincrement())
+  full_name     String        @db.VarChar(100)
+  email         String        @unique @db.VarChar(100)
+  phone         String?       @unique @db.VarChar(15)
+  password_hash String        @db.VarChar(255)
+  status        String        @default("Active") @db.VarChar(20)
+  created_at    DateTime      @default(now())
+
+  User_Roles              User_Roles[]
+  Tasks_requested         Tasks[]               @relation("RequestedBy")
+  Task_Assignments        Task_Assignments[]    @relation("VolunteerAssignment")
+  Family_Elderly_Map      Family_Elderly_Map[]
+  Volunteer_Verification  Volunteer_Verification[] @relation("VolunteerVerif")
+  Verified_by             Volunteer_Verification[] @relation("VerifiedBy")
+  Availability_Slots      Availability_Slots[]
+}
+
+model User_Roles {
+  user_role_id Int   @id @default(autoincrement())
+  user_id      Int
+  role_id      Int
+  Users        Users @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  Roles        Roles @relation(fields: [role_id], references: [role_id])
+
+  @@unique([user_id, role_id])
+}
+
+model Postal_Codes {
+  pincode   String      @id @db.VarChar(10)
+  city      String      @db.VarChar(50)
+  state     String      @db.VarChar(50)
+  Locations Locations[]
+}
+
+model Locations {
+  location_id     Int           @id @default(autoincrement())
+  address_line    String?       @db.VarChar(255)
+  pincode         String        @db.VarChar(10)
+  Postal_Codes    Postal_Codes  @relation(fields: [pincode], references: [pincode])
+  Elderly_Profiles Elderly_Profiles[]
+  Elderly_Homes   Elderly_Homes[]
+  Home_Networks   Home_Networks[]
+}
+
+model Task_Categories {
+  category_id   Int     @id @default(autoincrement())
+  category_name String  @unique @db.VarChar(50)
+  Tasks         Tasks[]
+}
+
+model Elderly_Profiles {
+  elderly_id   Int      @id @default(autoincrement())
+  name         String   @db.VarChar(100)
+  date_of_birth DateTime @db.Date
+  gender       String?  @db.VarChar(10)
+  living_type  String   @db.VarChar(20)
+  location_id  Int?
+  Locations    Locations? @relation(fields: [location_id], references: [location_id])
+
+  Elderly_Medical_Notes  Elderly_Medical_Notes[]
+  Family_Elderly_Map     Family_Elderly_Map[]
+  Emergency_Contacts     Emergency_Contacts[]
+  Elderly_Home_Residents Elderly_Home_Residents[]
+  Tasks                  Tasks[]
+}
+
+model Elderly_Medical_Notes {
+  note_id    Int              @id @default(autoincrement())
+  elderly_id Int
+  condition_note String       @db.Text
+  noted_at   DateTime         @default(now())
+  Elderly_Profiles Elderly_Profiles @relation(fields: [elderly_id], references: [elderly_id], onDelete: Cascade)
+}
+
+model Family_Elderly_Map {
+  map_id         Int              @id @default(autoincrement())
+  family_user_id Int
+  elderly_id     Int
+  relation_type  String?          @db.VarChar(50)
+  Users          Users            @relation(fields: [family_user_id], references: [user_id])
+  Elderly_Profiles Elderly_Profiles @relation(fields: [elderly_id], references: [elderly_id])
+
+  @@unique([family_user_id, elderly_id])
+}
+
+model Emergency_Contacts {
+  contact_id    Int              @id @default(autoincrement())
+  elderly_id    Int
+  contact_name  String           @db.VarChar(100)
+  contact_phone String           @db.VarChar(15)
+  relation      String?          @db.VarChar(50)
+  Elderly_Profiles Elderly_Profiles @relation(fields: [elderly_id], references: [elderly_id], onDelete: Cascade)
+}
+
+model Elderly_Homes {
+  home_id             Int          @id @default(autoincrement())
+  home_name           String       @db.VarChar(150)
+  registration_number String?      @unique @db.VarChar(100)
+  capacity            Int
+  phone               String?      @db.VarChar(15)
+  email               String?      @db.VarChar(100)
+  location_id         Int?
+  status              String       @default("Active") @db.VarChar(20)
+  Locations           Locations?   @relation(fields: [location_id], references: [location_id])
+  Home_Network_Map    Home_Network_Map[]
+  Elderly_Home_Residents Elderly_Home_Residents[]
+  Tasks               Tasks[]
+}
+
+model Home_Networks {
+  network_id   Int              @id @default(autoincrement())
+  network_name String           @unique @db.VarChar(150)
+  description  String?          @db.Text
+  location_id  Int?
+  Locations    Locations?       @relation(fields: [location_id], references: [location_id])
+  Home_Network_Map Home_Network_Map[]
+}
+
+model Home_Network_Map {
+  map_id     Int           @id @default(autoincrement())
+  home_id    Int
+  network_id Int
+  Elderly_Homes  Elderly_Homes  @relation(fields: [home_id], references: [home_id])
+  Home_Networks  Home_Networks  @relation(fields: [network_id], references: [network_id])
+
+  @@unique([home_id, network_id])
+}
+
+model Elderly_Home_Residents {
+  resident_id    Int           @id @default(autoincrement())
+  elderly_id     Int
+  home_id        Int
+  room_number    String?       @db.VarChar(20)
+  admission_date DateTime      @db.Date
+  discharge_date DateTime?     @db.Date
+  Elderly_Profiles Elderly_Profiles @relation(fields: [elderly_id], references: [elderly_id])
+  Elderly_Homes  Elderly_Homes @relation(fields: [home_id], references: [home_id])
+}
+
+model Tasks {
+  task_id      Int              @id @default(autoincrement())
+  elderly_id   Int
+  requested_by Int
+  category_id  Int
+  home_id      Int?
+  description  String?          @db.Text
+  task_date    DateTime         @db.Date
+  task_time    DateTime?        @db.Time
+  status       String           @default("Pending") @db.VarChar(20)
+  Elderly_Profiles Elderly_Profiles @relation(fields: [elderly_id], references: [elderly_id])
+  Users        Users            @relation("RequestedBy", fields: [requested_by], references: [user_id])
+  Task_Categories Task_Categories @relation(fields: [category_id], references: [category_id])
+  Elderly_Homes Elderly_Homes?  @relation(fields: [home_id], references: [home_id])
+  Task_Assignments Task_Assignments?
+}
+
+model Task_Assignments {
+  assignment_id     Int       @id @default(autoincrement())
+  task_id           Int       @unique
+  volunteer_id      Int
+  assigned_at       DateTime  @default(now())
+  completion_status String    @default("Pending") @db.VarChar(20)
+  completed_at      DateTime?
+  Tasks             Tasks     @relation(fields: [task_id], references: [task_id])
+  Users             Users     @relation("VolunteerAssignment", fields: [volunteer_id], references: [user_id])
+}
+
+model Volunteer_Verification {
+  verification_id       Int       @id @default(autoincrement())
+  volunteer_id          Int
+  id_document_type      String?   @db.VarChar(50)
+  id_proof_number       String?   @db.VarChar(100)
+  background_check_status String  @default("Pending") @db.VarChar(20)
+  verified_by           Int?
+  verified_at           DateTime?
+  Volunteer             Users     @relation("VolunteerVerif", fields: [volunteer_id], references: [user_id])
+  Verifier              Users?    @relation("VerifiedBy", fields: [verified_by], references: [user_id])
+}
+
+model Availability_Slots {
+  slot_id        Int      @id @default(autoincrement())
+  volunteer_id   Int
+  available_date DateTime @db.Date
+  start_time     DateTime @db.Time
+  end_time       DateTime @db.Time
+  Users          Users    @relation(fields: [volunteer_id], references: [user_id])
+}
