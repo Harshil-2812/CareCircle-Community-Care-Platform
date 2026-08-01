@@ -1,0 +1,56 @@
+# CareCircle — All Package Dependencies
+# Format: package-name==version
+# Backend (Node.js) and Frontend (React/Vite) combined
+
+# ============================================================
+# BACKEND — Node.js / Express
+# ============================================================
+
+# Core framework
+express==4.19.2
+
+# Database & ORM
+@prisma/client==5.14.0
+prisma==5.14.0
+mysql2==3.9.7
+
+# Authentication
+bcryptjs==2.4.3
+jsonwebtoken==9.0.2
+
+# Validation
+zod==3.23.8
+
+# Utilities
+cors==2.8.5
+dotenv==16.4.5
+
+# Dev tools
+nodemon==3.1.0
+
+# ============================================================
+# FRONTEND — React / Vite
+# ============================================================
+
+# Core React
+react==18.3.1
+react-dom==18.3.1
+
+# Routing
+react-router-dom==6.24.0
+
+# HTTP client
+axios==1.7.2
+
+# UI utilities
+react-hot-toast==2.4.1
+lucide-react==0.400.0
+
+# Styling
+tailwindcss==3.4.4
+autoprefixer==10.4.19
+postcss==8.4.39
+
+# Build tooling
+vite==5.3.1
+@vitejs/plugin-react==4.3.1
